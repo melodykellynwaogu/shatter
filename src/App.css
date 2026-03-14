@@ -1,0 +1,533 @@
+:root {
+  --bg: #0b0f1a;
+  --ink: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.66);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glassBorder: rgba(255, 255, 255, 0.22);
+  --aqua: #6cf2ff;
+  --aqua2: #00eaff;
+  --shadow: rgba(0, 0, 0, 0.5);
+}
+
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+}
+
+.scene__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 420px at 50% 15%, rgba(108, 242, 255, 0.12), transparent 60%),
+    radial-gradient(600px 320px at 15% 75%, rgba(0, 234, 255, 0.08), transparent 55%),
+    radial-gradient(700px 380px at 85% 80%, rgba(108, 242, 255, 0.06), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 55%),
+    var(--bg);
+  filter: saturate(1.05);
+}
+
+.scene__stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.particleCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.scene__controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 16px 14px;
+  display: grid;
+  gap: 10px;
+  background: linear-gradient(180deg, transparent, rgba(11, 15, 26, 0.92) 40%, rgba(11, 15, 26, 0.98));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.controls__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.controls__hint {
+  font-size: 13px;
+  color: var(--muted);
+  user-select: none;
+}
+
+.breakButton {
+  border-radius: 12px;
+  border: 1px solid rgba(108, 242, 255, 0.35);
+  background: linear-gradient(180deg, rgba(108, 242, 255, 0.12), rgba(108, 242, 255, 0.05));
+  color: var(--ink);
+  padding: 10px 14px;
+  font-weight: 650;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 234, 255, 0.06);
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+.breakButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(108, 242, 255, 0.55);
+  background: linear-gradient(180deg, rgba(108, 242, 255, 0.16), rgba(108, 242, 255, 0.06));
+}
+
+.breakButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.breakButton:focus-visible {
+  outline: 2px solid rgba(108, 242, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.soundToggle {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+  user-select: none;
+}
+
+.a11yToggle {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+  user-select: none;
+}
+
+.a11yToggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.a11yToggle:focus-visible {
+  outline: 2px solid rgba(108, 242, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.scene--a11y {
+  --ink: rgba(255, 255, 255, 0.98);
+  --muted: rgba(255, 255, 255, 0.85);
+}
+
+.scene--a11y .controls__hint {
+  font-size: 14px;
+}
+
+.scene--a11y .terminal__screen {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.scene--a11y .terminal__input {
+  font-size: 14px;
+}
+
+.scene--a11y .glassCeiling__label {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.soundToggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.soundToggle:focus-visible {
+  outline: 2px solid rgba(108, 242, 255, 0.7);
+  outline-offset: 2px;
+}
+
+/* Glass ceiling */
+.glassCeiling {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--ceilingHeight, 34vh);
+  min-height: 240px;
+  pointer-events: none;
+}
+
+.glassCeiling__pane {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 60px var(--shadow);
+}
+
+.glassCeiling__label {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.scene--reducedTransparency .glassCeiling__label {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.scene--reducedTransparency .glassCeiling__pane {
+  backdrop-filter: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+}
+
+.glassCeiling--cracking .glassCeiling__pane {
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55), 0 0 40px rgba(0, 234, 255, 0.06);
+}
+
+.glassCeiling--shattered .glassCeiling__pane {
+  animation: panePop 420ms ease-out forwards;
+}
+
+@keyframes panePop {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-8px) scale(1.02);
+    opacity: 0;
+  }
+}
+
+.glassCeiling__cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.crack {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+}
+
+.glassCeiling--cracking .crack {
+  opacity: 1;
+  animation: crackDraw 1500ms ease-out forwards;
+}
+
+.glassCeiling--cracking .crack--b {
+  animation-delay: 140ms;
+}
+.glassCeiling--cracking .crack--c {
+  animation-delay: 240ms;
+}
+.glassCeiling--cracking .crack--d {
+  animation-delay: 320ms;
+}
+.glassCeiling--cracking .crack--e {
+  animation-delay: 410ms;
+}
+.glassCeiling--cracking .crack--f {
+  animation-delay: 460ms;
+}
+
+@keyframes crackDraw {
+  0% {
+    stroke-dashoffset: 900;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.glassCeiling__shards {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.glassCeiling--shattered .glassCeiling__shards {
+  opacity: 1;
+}
+
+.glassShard {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  transform: translate3d(0, 0, 0);
+  opacity: 0;
+}
+
+.glassCeiling--shattered .glassShard {
+  opacity: 1;
+  animation: shardDrop 1650ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes shardDrop {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    filter: blur(0px);
+  }
+  65% {
+    filter: blur(0px);
+  }
+  100% {
+    transform: translate3d(var(--dx), 78vh, 0) rotate(var(--rot));
+    filter: blur(0.1px);
+  }
+}
+
+.glassShard.s1 {
+  left: 0%;
+  width: 18%;
+  clip-path: polygon(0% 0%, 100% 0%, 72% 100%, 0% 90%);
+  --dx: -10px;
+  --rot: -18deg;
+  --delay: 0ms;
+}
+.glassShard.s2 {
+  left: 16%;
+  width: 13%;
+  clip-path: polygon(0% 0%, 100% 0%, 82% 100%, 18% 100%);
+  --dx: -16px;
+  --rot: 10deg;
+  --delay: 40ms;
+}
+.glassShard.s3 {
+  left: 28%;
+  width: 14%;
+  clip-path: polygon(0% 0%, 100% 0%, 95% 82%, 40% 100%, 0% 78%);
+  --dx: 8px;
+  --rot: -8deg;
+  --delay: 70ms;
+}
+.glassShard.s4 {
+  left: 41%;
+  width: 18%;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 72%, 64% 100%, 0% 88%);
+  --dx: 14px;
+  --rot: 14deg;
+  --delay: 110ms;
+}
+.glassShard.s5 {
+  left: 58%;
+  width: 14%;
+  clip-path: polygon(0% 0%, 100% 0%, 82% 100%, 0% 92%);
+  --dx: 26px;
+  --rot: -20deg;
+  --delay: 150ms;
+}
+.glassShard.s6 {
+  left: 71%;
+  width: 12%;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 86%, 28% 100%, 0% 78%);
+  --dx: 10px;
+  --rot: 22deg;
+  --delay: 190ms;
+}
+.glassShard.s7 {
+  left: 82%;
+  width: 10%;
+  clip-path: polygon(0% 0%, 100% 0%, 72% 100%, 0% 84%);
+  --dx: 8px;
+  --rot: -12deg;
+  --delay: 220ms;
+}
+.glassShard.s8 {
+  left: 90%;
+  width: 10%;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 92%, 24% 100%, 0% 78%);
+  --dx: -6px;
+  --rot: 10deg;
+  --delay: 250ms;
+}
+.glassShard.s9 {
+  left: 47%;
+  width: 16%;
+  clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 0% 76%);
+  --dx: -28px;
+  --rot: 6deg;
+  --delay: 290ms;
+}
+.glassShard.s10 {
+  left: 33%;
+  width: 13%;
+  clip-path: polygon(0% 0%, 100% 0%, 72% 100%, 10% 100%);
+  --dx: 36px;
+  --rot: -26deg;
+  --delay: 320ms;
+}
+
+/* Terminal */
+.terminal {
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(8, 10, 18, 0.72);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+  overflow: hidden;
+}
+
+.scene--reducedTransparency .terminal {
+  background: rgba(8, 10, 18, 0.92);
+}
+
+.terminal__screen {
+  max-height: 132px;
+  overflow: auto;
+  padding: 12px 12px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.terminal__line {
+  padding: 1px 0;
+  white-space: pre-wrap;
+}
+
+.terminal__inputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.terminal__prompt {
+  color: rgba(108, 242, 255, 0.9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.terminal__input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.terminal__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.terminal.is-disabled {
+  opacity: 0.75;
+}
+
+/* Message */
+.scene__message {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40%;
+  transform: translateY(-50%);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+  padding: 0 16px;
+}
+
+.scene__message.is-visible {
+  opacity: 1;
+}
+
+.message__title {
+  font-size: clamp(22px, 3.6vw, 44px);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  text-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+.message__subtitle {
+  margin-top: 6px;
+  font-size: clamp(14px, 1.8vw, 18px);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message__tag {
+  margin-top: 14px;
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 242, 255, 0.25);
+  background: rgba(108, 242, 255, 0.08);
+  color: rgba(108, 242, 255, 0.95);
+  letter-spacing: 0.06em;
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glassCeiling--shattered .glassShard,
+  .glassCeiling--shattered .glassCeiling__pane,
+  .glassCeiling--cracking .crack {
+    animation: none !important;
+  }
+  .scene__message {
+    transition: none;
+  }
+}
+
+.scene--reducedMotion .glassCeiling--shattered .glassShard,
+.scene--reducedMotion .glassCeiling--shattered .glassCeiling__pane,
+.scene--reducedMotion .glassCeiling--cracking .crack {
+  animation: none !important;
+}
+
+.scene--reducedMotion .scene__message {
+  transition: none;
+}
