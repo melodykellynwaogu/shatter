@@ -1,5 +1,4 @@
 import '../styles/hero.css'
-// import { NavigateEvent } from '@remix-run/router'
 
 function Hero({ onSelectCategory }) {
   return (
@@ -21,8 +20,7 @@ function Hero({ onSelectCategory }) {
           <button type="button" className="hero__secondary" onClick={() => onSelectCategory('Family Meals')}>
             Explore Meals
           </button>
-          {/* This button is just for demonstration and doesn't have a real link in this context. */}
-          <button type="button" onClick={() => NavigateEvent('/')}>
+          <button type="button" onClick={() => { window.location.href = '/' }}>
             Back Home
           </button>
         </div>
