@@ -2,11 +2,14 @@ import { useMemo, useState } from 'react'
 import products from './data/products'
 import ProductCard from './components/ProductCard'
 import CartSidebar from './components/CartSidebar'
+import WelcomePage from './components/WelcomePage'
+import Hero from './components/Hero'
 import './App.css'
 
 const categories = ['All', 'Fresh Produce', 'Family Meals', 'Pantry', 'Snacks', 'Dairy']
 
 function App() {
+  const [hasEntered, setHasEntered] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [searchTerm, setSearchTerm] = useState('')
   const [cartItems, setCartItems] = useState([])
@@ -49,40 +52,17 @@ function App() {
     setCartItems([])
   }
 
+  function handleEnterSite() {
+    setHasEntered(true)
+  }
+
+  if (!hasEntered) {
+    return <WelcomePage onEnter={handleEnterSite} />
+  }
+
   return (
     <div className="family-fair-app">
-      <header className="hero">
-        <div className="hero__copy">
-          <p className="eyebrow">Family Fair</p>
-          <h1>Modern grocery shopping for the whole family.</h1>
-          <p>
-            A responsive supermarket platform with curated family meals, fresh produce, and a clean
-            shopping experience built for fast browsing and easy ordering.
-          </p>
-          <div className="hero__actions">
-            <button type="button" onClick={() => setSelectedCategory('Fresh Produce')}>
-              Shop fresh
-            </button>
-            <button type="button" className="hero__secondary" onClick={() => setSelectedCategory('Family Meals')}>
-              View meals
-            </button>
-          </div>
-        </div>
-        <div className="hero__details">
-          <div>
-            <strong>✨ Family-ready</strong>
-            <span>Curated bundles and meals.</span>
-          </div>
-          <div>
-            <strong>⚡ Fast browsing</strong>
-            <span>Responsive layout on every device.</span>
-          </div>
-          <div>
-            <strong>🛒 Seamless checkout</strong>
-            <span>Clear cart and easy order flow.</span>
-          </div>
-        </div>
-      </header>
+      <Hero onSelectCategory={setSelectedCategory} />
 
       <main className="shop-layout">
         <section className="shop-panel">

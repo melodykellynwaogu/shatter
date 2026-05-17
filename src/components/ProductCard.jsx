@@ -1,4 +1,4 @@
-import './ProductCard.css'
+import '../styles/product-card.css'
 
 function ProductCard({ product, onAdd }) {
   return (

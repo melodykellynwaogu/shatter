@@ -1,3 +1,5 @@
+import '../styles/cart-sidebar.css'
+
 function CartSidebar({ cartItems, total, onRemove, onClear }) {
   return (
     <aside className="cart-sidebar">
