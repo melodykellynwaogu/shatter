@@ -1,221 +1,146 @@
+import { useMemo, useState } from 'react'
+import products from './data/products'
+import ProductCard from './components/ProductCard'
+import CartSidebar from './components/CartSidebar'
 import './App.css'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import CanvasParticles from './components/CanvasParticles.jsx'
-import GlassCeiling from './components/GlassCeiling.jsx'
-import Terminal from './components/Terminal.jsx'
-import useMediaQuery from './hooks/useMediaQuery.js'
-import { createSfx } from './sfx.js'
 
-const CEILINGS = [
-  { id: 'entry', title: 'Entry', vh: 34, desc: 'First steps. First rejections. Still rising.' },
-  {
-    id: 'recognition',
-    title: 'Recognition',
-    vh: 26,
-    desc: 'Your work matters. Make it visible. Claim the credit.',
-  },
-  {
-    id: 'leadership',
-    title: 'Leadership',
-    vh: 18,
-    desc: 'Not permission—position. Not a seat—your seat.',
-  },
-]
+const categories = ['All', 'Fresh Produce', 'Family Meals', 'Pantry', 'Snacks', 'Dairy']
 
 function App() {
-  const [ceilingIndex, setCeilingIndex] = useState(0)
-  const [phase, setPhase] = useState('barrier') // barrier | cracking | shattered
-  const [showMessage, setShowMessage] = useState(false)
-  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)', false)
-  const prefersReducedTransparency = useMediaQuery('(prefers-reduced-transparency: reduce)', false)
-  const [a11yMode, setA11yMode] = useState(false)
-  const [soundOnOverride, setSoundOnOverride] = useState(null)
-  const [soundReady, setSoundReady] = useState(false)
-  const [terminalLines, setTerminalLines] = useState([
-    'timetrack@shatter:~$',
-    'Type `break ceiling` or `run equality.exe` and press Enter.',
-  ])
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [cartItems, setCartItems] = useState([])
 
-  const canTrigger = phase === 'barrier'
-  const isFinalCeiling = ceilingIndex >= CEILINGS.length - 1
-  const ceiling = CEILINGS[Math.min(ceilingIndex, CEILINGS.length - 1)]
-  const reducedMotion = a11yMode || prefersReducedMotion
-  const reducedTransparency = a11yMode || prefersReducedTransparency
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        || product.description.toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesCategory && matchesSearch
+    })
+  }, [selectedCategory, searchTerm])
 
-  const acceptedCommands = useMemo(
-    () => new Set(['break ceiling', 'run equality.exe', 'run equality.exe;']),
-    [],
-  )
+  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
 
-  const sfxRef = useRef(null)
-
-  const soundOn = soundOnOverride ?? !reducedMotion
-
-  useEffect(() => {
-    const instance = sfxRef.current
-    if (!instance) return
-    instance.setMuted(!soundOn)
-  }, [soundOn])
-
-  useEffect(() => {
-    return () => sfxRef.current?.dispose?.()
-  }, [])
-
-  async function ensureAudioUnlocked() {
-    if (!sfxRef.current) sfxRef.current = createSfx()
-    if (!sfxRef.current) return false
-
-    try {
-      await sfxRef.current.unlock()
-      setSoundReady(true)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  function triggerBreak(source) {
-    if (!canTrigger) return
-    setTerminalLines((lines) => [
-      ...lines,
-      `barrier ${ceilingIndex + 1}/${CEILINGS.length}: ${ceiling.title}`,
-      ceiling.desc,
-      `${source}: pressure rising…`,
-    ])
-    if (soundOn) {
-      ensureAudioUnlocked().then((ok) => {
-        if (!ok) return
-        sfxRef.current?.setMuted(false)
-        sfxRef.current?.crack(1)
-      })
-    }
-    setPhase('cracking')
-  }
-
-  function onTerminalSubmit(raw) {
-    const command = raw.trim().toLowerCase()
-    setTerminalLines((lines) => [...lines, `> ${raw}`])
-
-    if (acceptedCommands.has(command)) {
-      triggerBreak('system')
-      return
-    }
-
-    setTerminalLines((lines) => [
-      ...lines,
-      `command not found: ${raw}`,
-      'hint: try `break ceiling`',
-    ])
-  }
-
-  useEffect(() => {
-    if (phase !== 'cracking') return
-
-    const toShatter = window.setTimeout(() => {
-      if (soundOn) sfxRef.current?.shatter(1)
-      setPhase('shattered')
-    }, 1600)
-    const toAfter = window.setTimeout(() => {
-      if (isFinalCeiling) {
-        setShowMessage(true)
-        setTerminalLines((lines) => [
-          ...lines,
-          'barriers cleared.',
-          'new prompt: define your own limits.',
-        ])
-        return
+  function handleAdd(product) {
+    setCartItems((items) => {
+      const existing = items.find((item) => item.id === product.id)
+      if (existing) {
+        return items.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+        )
       }
+      return [...items, { ...product, quantity: 1 }]
+    })
+  }
 
-      setTerminalLines((lines) => [
-        ...lines,
-        `next barrier unlocked: ${CEILINGS[ceilingIndex + 1].title}`,
-        CEILINGS[ceilingIndex + 1].desc,
-        'keep going.',
-      ])
-      setCeilingIndex((i) => i + 1)
-      setPhase('barrier')
-    }, 2400)
+  function handleRemove(product) {
+    setCartItems((items) =>
+      items
+        .map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity - 1 } : item,
+        )
+        .filter((item) => item.quantity > 0),
+    )
+  }
 
-    return () => {
-      window.clearTimeout(toShatter)
-      window.clearTimeout(toAfter)
-    }
-  }, [phase, soundOn, ceilingIndex, isFinalCeiling])
+  function handleClear() {
+    setCartItems([])
+  }
 
   return (
-    <div
-      className={`scene scene--${phase} ${reducedTransparency ? 'scene--reducedTransparency' : ''} ${reducedMotion ? 'scene--reducedMotion' : ''} ${a11yMode ? 'scene--a11y' : ''}`}
-    >
-      <div className="scene__bg" aria-hidden="true" />
-
-      <div className="scene__stage" role="img" aria-label="Rising code blocked by a glass ceiling">
-        <CanvasParticles
-          phase={phase}
-          ceilingIndex={ceilingIndex}
-          ceilingVh={ceiling.vh}
-          reducedMotion={reducedMotion}
-        />
-        <GlassCeiling phase={phase} height={`${ceiling.vh}vh`} label={ceiling.title} />
-      </div>
-
-      <div className="scene__controls">
-        <div className="controls__row">
-          <button
-            className="breakButton"
-            type="button"
-            onClick={() => triggerBreak('button')}
-            disabled={!canTrigger}
-          >
-            Break the Ceiling
-          </button>
-          <button
-            className="a11yToggle"
-            type="button"
-            onClick={() => setA11yMode((v) => !v)}
-            aria-pressed={a11yMode}
-            title="High contrast + reduced motion + reduced transparency"
-          >
-            Accessibility: {a11yMode ? 'On' : 'Off'}
-          </button>
-          <button
-            className="soundToggle"
-            type="button"
-            onClick={() => {
-              const next = !soundOn
-              setSoundOnOverride(next)
-              if (next) ensureAudioUnlocked()
-            }}
-            aria-pressed={soundOn}
-            title={
-              reducedMotion
-                ? 'Sound is off by default due to reduced-motion settings.'
-                : 'Toggle sound effects'
-            }
-          >
-            Sound: {soundOn ? (soundReady ? 'On' : 'On*') : 'Off'}
-          </button>
-          <div className="controls__hint">
-            {phase === 'barrier'
-              ? `Barrier ${ceilingIndex + 1}/${CEILINGS.length} — ${ceiling.title}`
-              : phase === 'cracking'
-                ? 'Cracks are spreading…'
-                : 'The ceiling is gone.'}
+    <div className="family-fair-app">
+      <header className="hero">
+        <div className="hero__copy">
+          <p className="eyebrow">Family Fair</p>
+          <h1>Modern grocery shopping for the whole family.</h1>
+          <p>
+            A responsive supermarket platform with curated family meals, fresh produce, and a clean
+            shopping experience built for fast browsing and easy ordering.
+          </p>
+          <div className="hero__actions">
+            <button type="button" onClick={() => setSelectedCategory('Fresh Produce')}>
+              Shop fresh
+            </button>
+            <button type="button" className="hero__secondary" onClick={() => setSelectedCategory('Family Meals')}>
+              View meals
+            </button>
           </div>
         </div>
+        <div className="hero__details">
+          <div>
+            <strong>✨ Family-ready</strong>
+            <span>Curated bundles and meals.</span>
+          </div>
+          <div>
+            <strong>⚡ Fast browsing</strong>
+            <span>Responsive layout on every device.</span>
+          </div>
+          <div>
+            <strong>🛒 Seamless checkout</strong>
+            <span>Clear cart and easy order flow.</span>
+          </div>
+        </div>
+      </header>
 
-        <Terminal
-          disabled={!canTrigger}
-          lines={terminalLines}
-          onSubmit={onTerminalSubmit}
-          placeholder="break ceiling"
-        />
-      </div>
+      <main className="shop-layout">
+        <section className="shop-panel">
+          <div className="search-card">
+            <label htmlFor="search">Search groceries</label>
+            <input
+              id="search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search products, meals, or snacks"
+            />
+          </div>
 
-      <div className={`scene__message ${showMessage ? 'is-visible' : ''}`} aria-live="polite">
-        <div className="message__title">The ceiling was never your limit.</div>
-        <div className="message__subtitle">It was the limit you were taught to accept.</div>
-        <div className="message__tag">#WeCoded</div>
-      </div>
+          <div className="category-list" aria-label="Product categories">
+            {categories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={category === selectedCategory ? 'category-button active' : 'category-button'}
+                onClick={() => setSelectedCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="products-panel">
+          <div className="products-header">
+            <div>
+              <span className="products-label">{selectedCategory === 'All' ? 'All products' : selectedCategory}</span>
+              <p>{filteredProducts.length} items available</p>
+            </div>
+          </div>
+
+          <div className="product-grid">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} onAdd={handleAdd} />
+              ))
+            ) : (
+              <div className="empty-state">No products match your search. Try a different keyword.</div>
+            )}
+          </div>
+        </section>
+
+        <CartSidebar cartItems={cartItems} total={total} onRemove={handleRemove} onClear={handleClear} />
+      </main>
+
+      <footer className="footer-banner">
+        <div>
+          <h2>Family Fair is built for modern grocery shopping.</h2>
+          <p>From breakfast staples to family meal kits, every item is selected for quality and convenience.</p>
+        </div>
+      </footer>
+
+      <div className="cart-summary">{cartCount} item{cartCount === 1 ? '' : 's'} in cart</div>
     </div>
   )
 }
